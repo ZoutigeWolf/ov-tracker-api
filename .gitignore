@@ -1,0 +1,8 @@
+.env
+dev.sh
+pyrightconfig.json
+.DS_Store
+
+__pycache__/
+.idea/
+data/

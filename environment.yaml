@@ -1,0 +1,20 @@
+name: base
+channels:
+    - conda-forge
+    - anaconda
+    - defaults
+dependencies:
+    - aiofiles=22.1.0
+    - fastapi=0.112.2
+    - pip=24.2
+    - psycopg2=2.9.9
+    - pydantic=2.8.2
+    - python=3.12.2
+    - sqlalchemy=2.0.36
+    - sqlmodel=0.0.22
+    - uvicorn=0.20.0
+    - websockets=13.1
+    - python-dotenv=1.0.1
+    - pip:
+          - gtfs-realtime-bindings==1.0.0
+          - protobuf==5.28.3
