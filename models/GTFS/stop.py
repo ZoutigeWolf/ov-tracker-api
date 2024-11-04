@@ -1,7 +1,8 @@
+from pydantic import SkipValidation, field_validator
 from sqlalchemy import Column
 from geoalchemy2 import Geometry, WKTElement
 from sqlmodel import Field, SQLModel
-from typing import Any
+from typing import Any, Annotated
 
 from enums import WheelchairBoarding, LocationType
 
@@ -12,13 +13,16 @@ class StopGTFS(SQLModel, table=True):
     id: str = Field(primary_key=True)
     code: str | None = Field()
     name: str | None = Field()
-    location: Geometry = Field(sa_column=Column(Geometry(geometry_type="POINT", srid=4326)))
+    location: Annotated[Geometry, SkipValidation] = Field(sa_column=Column(Geometry(geometry_type="POINT", srid=4326)))
     type: LocationType = Field(default=LocationType.StopPlatform)
     parent_id: str | None = Field()
     timezone: str | None = Field()
     wheelchair_boarding: WheelchairBoarding = Field(default=WheelchairBoarding.NoInformation)
     platform_code: str | None = Field()
     zone_id: str | None = Field()
+
+    class Config: # type: ignore
+        arbitrary_types_allowed = True
 
     @classmethod
     def parse(cls, **kwargs) -> "StopGTFS":

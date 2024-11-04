@@ -1,8 +1,10 @@
 import os
 import sys
+from geoalchemy2 import WKTElement
 from sqlmodel import Session, select, text
 from typing import Callable, Generator
 import csv
+import pandas as pd
 
 from database import engine
 from models.GTFS import AgencyGTFS, CalendarDateGTFS, RouteGTFS, ShapeGTFS, StopGTFS, StopTimeGTFS, TransferGTFS, TripGTFS
@@ -23,16 +25,18 @@ def import_gtfs(dir: str):
         for name in [m[0] for m in MODELS]:
             f_name = f"{name}.txt"
             if not os.path.isfile(os.path.join(dir, f_name)):
-                parse_shapes(os.path.join(dir, f_name))
                 continue
 
-            if name == "shapes":
-                cls = ShapeGTFS.parse
 
             cls = [m[1] for m in MODELS if m[0] == name][0]
 
+            get_func = parse_file
+
+            if name == "shapes":
+                get_func = parse_shapes
+
             i = 0
-            for obj in parse_file(os.path.join(dir, f_name), cls):
+            for obj in get_func(os.path.join(dir, f_name), cls):
                 session.add(obj)
 
                 i += 1
@@ -71,17 +75,29 @@ def parse_file(path: str, cls: Callable) -> Generator:
         print(f"{name}: {i + 1} / {len(data) - 1} [{p:.2f}%]: {row}")
 
 
-def parse_shapes(path: str):
+def parse_shapes(path: str, cls: Callable) -> Generator:
     with open(path) as f:
         print(f"Reading {path}")
-        data = [l.replace("\n", "") for l in f.readlines()]
-        reader = csv.reader(data, delimiter=",", quotechar="\"")
+        data = pd.read_csv(path)
 
-    name = path.split("/")[-1].split(".")[0]
+    for i, (id, group) in enumerate(data.groupby("shape_id")):
+        group = group.sort_values("shape_pt_sequence")
 
-    keys = next(reader)
+        points = group[["shape_pt_lon", "shape_pt_lat"]].values
+        line_string = f"LINESTRING({', '.join(f'{lon} {lat}' for lon, lat in points)})"
 
-    print(f"Rows: {len(data) - 1}")
+        obj = cls(
+            id=str(id),
+            line_string=line_string
+        )
+
+        yield obj
+
+        len_data = data['shape_id'].nunique()
+
+        p = (i + 1) / (len_data) * 100
+
+        print(f"shapes: {i + 1} / {len_data} [{p:.2f}%]: {len(points)} points")
 
 
 if __name__ == "__main__":
