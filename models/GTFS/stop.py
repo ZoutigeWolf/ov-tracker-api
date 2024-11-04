@@ -30,7 +30,7 @@ class StopGTFS(SQLModel, table=True):
             id = kwargs["stop_id"],
             code = kwargs["stop_code"],
             name = kwargs["stop_name"],
-            location = WKTElement(f"POINT({kwargs['stop_lat']}, {kwargs['stop_lon']})", srid=4326), # type: ignore
+            location = WKTElement(f"POINT({kwargs['stop_lat']} {kwargs['stop_lon']})", srid=4326), # type: ignore
             type = kwargs["location_type"] and LocationType(int(kwargs["location_type"])),
             parent_id = kwargs["parent_station"],
             timezone = kwargs["stop_timezone"],
