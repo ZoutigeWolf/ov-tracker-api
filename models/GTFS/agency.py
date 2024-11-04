@@ -1,7 +1,7 @@
 from sqlmodel import Field, SQLModel
 
 
-class AgencyGTFS(SQLModel):
+class AgencyGTFS(SQLModel, table=True):
     __tablename__ = "gtfs_agencies" # type: ignore
 
     id: str = Field(primary_key=True)

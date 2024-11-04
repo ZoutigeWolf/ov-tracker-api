@@ -66,13 +66,15 @@ def parse_file(path: str, cls: Callable) -> Generator:
     print(f"Rows: {len(data) - 1}")
 
     for i, row in enumerate(reader):
-        yield cls(**{
+        obj = cls(**{
             keys[i]: v or None for i, v in enumerate(row)
         })
 
         p = (i + 1) / (len(data) - 1) * 100
 
         print(f"{name}: {i + 1} / {len(data) - 1} [{p:.2f}%]: {row}")
+
+        yield obj
 
 
 def parse_shapes(path: str, cls: Callable) -> Generator:
@@ -91,13 +93,13 @@ def parse_shapes(path: str, cls: Callable) -> Generator:
             line_string=line_string
         )
 
-        yield obj
-
         len_data = data['shape_id'].nunique()
 
         p = (i + 1) / (len_data) * 100
 
         print(f"shapes: {i + 1} / {len_data} [{p:.2f}%]: {len(points)} points")
+
+        yield obj
 
 
 if __name__ == "__main__":

@@ -3,7 +3,7 @@ from datetime import datetime
 
 from enums import ExceptionType
 
-class CalendarDateGTFS(SQLModel):
+class CalendarDateGTFS(SQLModel, table=True):
     __tablename__ = "gtfs_calendar_dates" # type: ignore
 
     service_id: str = Field(primary_key=True)

@@ -3,11 +3,11 @@ from sqlmodel import Field, SQLModel
 from enums import RouteType
 
 
-class RouteGTFS(SQLModel):
+class RouteGTFS(SQLModel, table=True):
     __tablename__ = "gtfs_routes" # type: ignore
 
     id: str = Field(primary_key=True)
-    agency_id: str = Field(foreign_key="agency.id")
+    agency_id: str = Field(foreign_key="gtfs_agencies.id")
     code: str | None = Field()
     name: str | None = Field()
     description: str | None = Field()

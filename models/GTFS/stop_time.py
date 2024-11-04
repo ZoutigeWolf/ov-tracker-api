@@ -5,12 +5,12 @@ from utils.time import parse_time
 from enums import PickupType, DropOffType, Timepoint
 
 
-class StopTimeGTFS(SQLModel):
+class StopTimeGTFS(SQLModel, table=True):
     __tablename__ = "gtfs_stop_times" # type: ignore
 
-    trip_id: str = Field(primary_key=True, foreign_key="trip.id")
+    trip_id: str = Field(primary_key=True, foreign_key="gtfs_trips.id")
     stop_index: int = Field(primary_key=True)
-    stop_id: str = Field(foreign_key="stop.id")
+    stop_id: str = Field(foreign_key="gtfs_stops.id")
     stop_headsign: str | None = Field()
     arrival: time = Field()
     departure: time = Field()

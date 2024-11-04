@@ -2,13 +2,13 @@ from sqlmodel import Field, SQLModel
 
 from enums import WheelchairAccesibility, BikeAccesibility
 
-class TripGTFS(SQLModel):
+class TripGTFS(SQLModel, table=True):
     __tablename__ = "gtfs_trips" # type: ignore
 
     id: str = Field(primary_key=True)
     realtime_id: str = Field()
     service_id: str = Field()
-    route_id: str = Field(foreign_key="route.id")
+    route_id: str = Field(foreign_key="gtfs_routes.id")
     shape_id: str | None = Field()
     block_id: str | None = Field()
     headsign: str | None = Field()

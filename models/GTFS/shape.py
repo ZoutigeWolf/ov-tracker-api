@@ -5,7 +5,7 @@ from sqlmodel import Field, SQLModel
 from typing import Any, Annotated
 
 
-class ShapeGTFS(SQLModel):
+class ShapeGTFS(SQLModel, table=True):
     __tablename__ = "gtfs_shapes" # type: ignore
 
     id: str = Field(primary_key=True)
