@@ -1,21 +1,30 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import SQLModel
+from apscheduler.schedulers.background import BackgroundScheduler
 from starlette.websockets import WebSocket
-from dotenv import load_dotenv
-
-load_dotenv()
 
 from database import engine
-import database
-from models import Agency
-from routers import stops_router
+from data import fetch_realtime_data
+from routers import stops_router, map_router
+from models import *
 
 SQLModel.metadata.create_all(engine)
 
 app = FastAPI()
-
-@app.get("/")
-async def a():
-    await database.import_gtfs("/Users/zouti/Downloads/GTFS NL")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+)
 
 app.include_router(stops_router)
+app.include_router(map_router)
+
+scheduler = BackgroundScheduler()
+scheduler.add_job(fetch_realtime_data, "interval", ["data/buffers"], minutes=1)
+scheduler.start()
+
+
+@app.on_event("shutdown")
+def on_shutdown():
+    scheduler.shutdown()

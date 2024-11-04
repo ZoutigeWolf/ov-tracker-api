@@ -1,23 +1,13 @@
-from enum import IntEnum
 from sqlmodel import Field, SQLModel
-from sqlalchemy import Column, Enum
 
-class RouteType(IntEnum):
-    Tram = 0
-    Subway = 1
-    Rail = 2
-    Bus = 3
-    Ferry = 4
-    CableTram = 5
-    Aerial = 6
-    Funicular = 7
-    TrolleyBus = 11
-    Monorail = 12
+from enums import RouteType
 
 
-class Route(SQLModel, table=True):
+class RouteGTFS(SQLModel):
+    __tablename__ = "gtfs_routes" # type: ignore
+
     id: str = Field(primary_key=True)
-    agency_id: str = Field()
+    agency_id: str = Field(foreign_key="agency.id")
     code: str | None = Field()
     name: str | None = Field()
     description: str | None = Field()
@@ -27,7 +17,7 @@ class Route(SQLModel, table=True):
     url: str | None= Field()
 
     @classmethod
-    def parse(cls, **kwargs) -> "Route":
+    def parse(cls, **kwargs) -> "RouteGTFS":
         return cls(
             id = kwargs["route_id"],
             agency_id = kwargs["agency_id"],

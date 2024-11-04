@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Path, Query, Depends
-from sqlmodel import Session, func, select
+from sqlmodel import Session, func, select, col, and_
 
-from models.stop import Stop
 from database import get_session
 
 router = APIRouter(
@@ -10,33 +9,19 @@ router = APIRouter(
 )
 
 
-@router.get("/region")
-async def get_all_stops_in_region(
+@router.get("")
+async def get_all_stops(
     session: Session = Depends(get_session),
-    lat: float = Query(ge=-90, le=90),
-    lon: float = Query(ge=-180, le=180),
-    radius: int = Query(50, gt=0),
-) -> list[Stop]:
-    stops = session.exec(
-        select(Stop)
-            .where(
-                Stop.latitude is not None \
-                and Stop.longitude is not None \
-                and func.haversine(lat, lon, Stop.latitude, Stop.longitude) <= radius
-            )
-    ).all()
-
-    return list(stops)
+    limit: int = Query(100, gt=0, le=100),
+    offset: int = Query(0, ge=0)
+) -> list:
+    return []
 
 
 @router.get("/{stop_id}")
 async def get_stop(
     session: Session = Depends(get_session),
-    stop_id: str = Path()
-) -> Stop | None:
-    stop = session.exec(
-        select(Stop)
-            .where(Stop.id == stop_id)
-    ).one_or_none()
-
-    return stop
+    stop_id: str = Path(),
+    detailed: bool = Query(False)
+) -> None:
+    return None

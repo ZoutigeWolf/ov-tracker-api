@@ -1,45 +1,34 @@
-from enum import IntEnum
+from sqlalchemy import Column
+from geoalchemy2 import Geometry, WKTElement
 from sqlmodel import Field, SQLModel
-from sqlalchemy import Column, Enum
+from typing import Any
+
+from enums import WheelchairBoarding, LocationType
 
 
-class WheelchairBoarding(IntEnum):
-    NoInformation = 0
-    SomeVehicles = 1
-    NotPossible = 2
+class StopGTFS(SQLModel, table=True):
+    __tablename__ = "gtfs_stops" # type: ignore
 
-
-class LocationType(IntEnum):
-    StopPlatform = 0
-    Station = 1
-    EntranceExit = 2
-    GenericNode = 3
-    BoardingArea = 4
-
-
-class Stop(SQLModel, table=True):
     id: str = Field(primary_key=True)
     code: str | None = Field()
     name: str | None = Field()
-    latitude: float | None = Field()
-    longitude: float | None = Field()
+    location: Geometry = Field(sa_column=Column(Geometry(geometry_type="POINT", srid=4326)))
     type: LocationType = Field(default=LocationType.StopPlatform)
-    parent: str | None = Field()
+    parent_id: str | None = Field()
     timezone: str | None = Field()
     wheelchair_boarding: WheelchairBoarding = Field(default=WheelchairBoarding.NoInformation)
     platform_code: str | None = Field()
     zone_id: str | None = Field()
 
     @classmethod
-    def parse(cls, **kwargs) -> "Stop":
+    def parse(cls, **kwargs) -> "StopGTFS":
         return cls(
             id = kwargs["stop_id"],
             code = kwargs["stop_code"],
             name = kwargs["stop_name"],
-            latitude = kwargs["stop_lat"] and float(kwargs["stop_lat"]),
-            longitude = kwargs["stop_lon"] and float(kwargs["stop_lon"]),
-            type = kwargs["location_type"] and LocationType(int(kwargs["location_type"])),
-            parent = kwargs["parent_station"],
+            location = WKTElement(f"POINT({kwargs['stop_lat']}, {kwargs['stop_lon']})", srid=4326), # type: ignore
+            type = kwargs["location_type"] and LocationType(int(kwargs["locationwhat _type"])),
+            parent_id = kwargs["parent_station"],
             timezone = kwargs["stop_timezone"],
             wheelchair_boarding = kwargs["wheelchair_boarding"] and WheelchairBoarding(int(kwargs["wheelchair_boarding"])),
             platform_code = kwargs["platform_code"],

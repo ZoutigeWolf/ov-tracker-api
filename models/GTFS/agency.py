@@ -1,7 +1,9 @@
 from sqlmodel import Field, SQLModel
 
 
-class Agency(SQLModel, table=True):
+class AgencyGTFS(SQLModel):
+    __tablename__ = "gtfs_agencies" # type: ignore
+
     id: str = Field(primary_key=True)
     name: str = Field()
     url: str = Field()
@@ -9,7 +11,7 @@ class Agency(SQLModel, table=True):
     phone_number: str | None = Field()
 
     @classmethod
-    def parse(cls, **kwargs) -> "Agency":
+    def parse(cls, **kwargs) -> "AgencyGTFS":
         return cls(
             id = kwargs["agency_id"],
             name = kwargs["agency_name"],

@@ -1,30 +1,24 @@
-from enum import IntEnum
 import uuid
 from sqlmodel import Field, SQLModel
-from sqlalchemy import Column, Enum
+
+from enums import TransferType
 
 
-class TransferType(IntEnum):
-    Recommended = 0
-    Timed = 1
-    Minimum = 2
-    NotPossible = 3
-    InSeat = 4
-    ReBoard = 5
+class TransferGTFS(SQLModel):
+    __tablename__ = "gtfs_transfers" # type: ignore
 
-class Transfer(SQLModel, table=True):
     id: str = Field(default_factory=uuid.uuid4, primary_key=True)
-    from_stop_id: str | None = Field()
-    to_stop_id: str | None = Field()
-    from_route_id: str | None = Field()
-    to_route_id: str  | None = Field()
-    from_trip_id: str | None = Field()
-    to_trip_id: str | None = Field()
+    from_stop_id: str | None = Field(foreign_key="stop.id")
+    to_stop_id: str | None = Field(foreign_key="stop.id")
+    from_route_id: str | None = Field(foreign_key="route.id")
+    to_route_id: str  | None = Field(foreign_key="route.id")
+    from_trip_id: str | None = Field(foreign_key="trip.id")
+    to_trip_id: str | None = Field(foreign_key="trip.id")
     transfer_type: TransferType = Field(default=TransferType.Recommended)
     min_transfer_time: int | None = Field()
 
     @classmethod
-    def parse(cls, **kwargs) -> "Transfer":
+    def parse(cls, **kwargs) -> "TransferGTFS":
         return cls(
             from_stop_id = kwargs["from_stop_id"],
             to_stop_id = kwargs["to_stop_id"],

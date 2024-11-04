@@ -1,35 +1,16 @@
-import datetime
-from enum import IntEnum
 from sqlmodel import Field, SQLModel
-from sqlalchemy import Column, Enum
 from datetime import datetime, time
 
 from utils.time import parse_time
+from enums import PickupType, DropOffType, Timepoint
 
 
-class PickupType(IntEnum):
-    Scheduled = 0
-    NoPickup = 1
-    PhoneAgency = 2
-    CoordinateWithDriver = 3
+class StopTimeGTFS(SQLModel):
+    __tablename__ = "gtfs_stop_times" # type: ignore
 
-
-class DropOffType(IntEnum):
-    Scheduled = 0
-    NoDropOff = 1
-    PhoneAgency = 2
-    CoordinateWithDriver = 3
-
-
-class Timepoint(IntEnum):
-    Approximate = 0
-    Exact = 1
-
-
-class StopTime(SQLModel, table=True):
-    trip_id: str = Field(primary_key=True)
+    trip_id: str = Field(primary_key=True, foreign_key="trip.id")
     stop_index: int = Field(primary_key=True)
-    stop_id: str | None = Field()
+    stop_id: str = Field(foreign_key="stop.id")
     stop_headsign: str | None = Field()
     arrival: time = Field()
     departure: time = Field()
@@ -40,7 +21,7 @@ class StopTime(SQLModel, table=True):
     fare_units_traveled: int | None = Field()
 
     @classmethod
-    def parse(cls, **kwargs) -> "StopTime":
+    def parse(cls, **kwargs) -> "StopTimeGTFS":
         return cls(
             trip_id = kwargs["trip_id"],
             stop_index = int(kwargs["stop_sequence"]),
@@ -54,4 +35,3 @@ class StopTime(SQLModel, table=True):
             shape_dist_traveled = kwargs["shape_dist_traveled"] and float(kwargs["shape_dist_traveled"]),
             fare_units_traveled = kwargs["fare_units_traveled"] and int(kwargs["fare_units_traveled"]),
         )
-        datetime.datetime.now().time()
