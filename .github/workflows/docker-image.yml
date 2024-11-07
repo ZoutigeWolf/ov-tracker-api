@@ -27,10 +27,8 @@ jobs:
           tags: ${{ secrets.REGISTRY_URL }}/ov-tracker-api:latest
           
       - name: Restart docker container
-        uses: JamesIves/fetch-api-data-action@v2
+        uses: fjogeleit/http-request-action@v1
         with:
-          endpoint: ${{ secrets.RESTART_URL }}
-          configuration: |
-            {
-              "method": "POST"
-            }
+          url: ${{ secrets.RESTART_URL }}
+          method: "POST"
+          preventFailureOnNoResponse: "true"
