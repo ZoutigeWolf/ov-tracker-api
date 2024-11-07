@@ -5,4 +5,4 @@ pyrightconfig.json
 
 __pycache__/
 .idea/
-data/
+data/buffers/
