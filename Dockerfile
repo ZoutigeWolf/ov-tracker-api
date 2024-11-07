@@ -13,6 +13,8 @@ USER root
 
 RUN mkdir -p /code/data/buffers
 
+RUN chown -R $MAMBA_USER /code/data/buffers
+
 USER $MAMBA_USER
 
 CMD ["uvicorn", "main:app", "--proxy-headers", "--host", "0.0.0.0", "--port", "80"]
