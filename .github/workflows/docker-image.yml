@@ -32,3 +32,4 @@ jobs:
           url: ${{ secrets.RESTART_URL }}
           method: "POST"
           preventFailureOnNoResponse: "true"
+          ignoreStatusCodes: "504"
