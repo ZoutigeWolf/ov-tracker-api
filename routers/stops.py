@@ -5,6 +5,8 @@ from sqlmodel import Session, func, select, col, and_
 from sqlalchemy import func
 from datetime import datetime
 
+from sqlmodel.sql.expression import distinct
+
 from database import get_session
 from models.GTFS.calendar_date import CalendarDateGTFS
 from models.GTFS.stop import StopDetailed, StopGTFS
@@ -35,7 +37,10 @@ async def get_all_stops(
     if not name and search:
         return []
 
-    q = select(StopGTFS)
+    q = (
+        select(StopGTFS)
+            .distinct(col(StopGTFS.name))
+    )
 
     if name is not None:
         if search:
@@ -46,9 +51,9 @@ async def get_all_stops(
             q = q.where(StopGTFS.name == name)
 
     if lat is not None:
-        q = q.order_by(ST_DistanceSpheroid(
+        q = q.order_by(StopGTFS.name, ST_DistanceSpheroid(
             StopGTFS.location,
-            ST_SetSRID(ST_MakePoint(lon, lat), 4326)
+            ST_SetSRID(ST_MakePoint(lat, lon), 4326)
         ))
 
     stops = session.exec(
@@ -83,7 +88,8 @@ async def get_stop(
 async def get_stop_times(
     session: Session = Depends(get_session),
     stop_id: str = Path(),
-    detailed: bool = Query(False)
+    detailed: bool = Query(False),
+    limit: int = Query(3, gt=0, le=10)
 ):
     times = session.exec(
         select(StopTimeGTFS)
@@ -95,7 +101,7 @@ async def get_stop_times(
             col(CalendarDateGTFS.date) == func.current_date()
         ))
         .order_by(col(StopTimeGTFS.departure))
-        .limit(2)
+        .limit(limit)
     ).all()
 
     if detailed:
