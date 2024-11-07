@@ -9,7 +9,10 @@ WORKDIR /code
 
 COPY . /code
 
-USER $MAMBA_USER
+USER root
+
 RUN mkdir -p /code/data/buffers
+
+USER $MAMBA_USER
 
 CMD ["uvicorn", "main:app", "--proxy-headers", "--host", "0.0.0.0", "--port", "80"]
