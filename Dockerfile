@@ -9,8 +9,7 @@ WORKDIR /code
 
 COPY . /code
 
-RUN chown -R $MAMBA_USER:$MAMBA_USER /code
-
-RUN mkdir data/buffers
+USER $MAMBA_USER
+RUN mkdir -p /code/data/buffers
 
 CMD ["uvicorn", "main:app", "--proxy-headers", "--host", "0.0.0.0", "--port", "80"]
