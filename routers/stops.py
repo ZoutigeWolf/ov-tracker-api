@@ -34,13 +34,15 @@ async def get_all_stops(
     if (lat is None) != (lon is None):
         raise HTTPException(status_code=400, detail="Only part of coordinate supplied")
 
-    if not name and search:
+    if (not name) and search:
         return []
 
     q = (
         select(StopGTFS)
-            .distinct(col(StopGTFS.name))
     )
+
+    if search:
+        q = q.distinct(col(StopGTFS.name))
 
     if name is not None:
         if search:
