@@ -15,7 +15,7 @@ class TripGTFS(SQLModel, table=True):
     short_name: str | None = Field()
     long_name: str | None = Field()
     direction: int = Field()
-    weelchair_accessible: WheelchairAccesibility = Field(default=WheelchairAccesibility.NoInformation)
+    wheelchair_accessible: WheelchairAccesibility = Field(default=WheelchairAccesibility.NoInformation)
     bikes_allowed: BikeAccesibility = Field(default=BikeAccesibility.NoInformation)
 
     @classmethod
@@ -31,6 +31,6 @@ class TripGTFS(SQLModel, table=True):
             short_name = kwargs["trip_short_name"],
             long_name = kwargs["trip_long_name"],
             direction = int(kwargs["direction_id"]),
-            weelchair_accessible = kwargs["wheelchair_accessible"] and WheelchairAccesibility(int(kwargs["wheelchair_accessible"])),
+            wheelchair_accessible = kwargs["wheelchair_accessible"] and WheelchairAccesibility(int(kwargs["wheelchair_accessible"])),
             bikes_allowed = kwargs["bikes_allowed"] and BikeAccesibility(int(kwargs["bikes_allowed"])),
         )

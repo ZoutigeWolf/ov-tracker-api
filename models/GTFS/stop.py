@@ -1,19 +1,23 @@
-from pydantic import SkipValidation, field_validator
+from geoalchemy2.elements import WKBElement
+from geojson import Feature, Point
+from pydantic import SkipValidation, field_serializer
 from sqlalchemy import Column
-from geoalchemy2 import Geometry, WKTElement
-from sqlmodel import Field, SQLModel
+from geoalchemy2 import WKTElement, Geometry
+from sqlmodel import Field, SQLModel, Session, select, col
+from shapely.wkb import loads
 from typing import Any, Annotated
 
 from enums import WheelchairBoarding, LocationType
+from models.GTFS.agency import AgencyGTFS
+from models.GTFS.route import RouteGTFS
+from models.GTFS.trip import TripGTFS
+from models.views import StopRoute
 
-
-class StopGTFS(SQLModel, table=True):
-    __tablename__ = "gtfs_stops" # type: ignore
-
+class StopBase(SQLModel):
     id: str = Field(primary_key=True)
     code: str | None = Field()
     name: str | None = Field()
-    location: Annotated[Geometry, SkipValidation] = Field(sa_column=Column(Geometry(geometry_type="POINT", srid=4326)))
+    location: Annotated[WKBElement, SkipValidation] = Field(sa_column=Column(Geometry(geometry_type="POINT", srid=4326)))
     type: LocationType = Field(default=LocationType.StopPlatform)
     parent_id: str | None = Field()
     timezone: str | None = Field()
@@ -23,6 +27,35 @@ class StopGTFS(SQLModel, table=True):
 
     class Config: # type: ignore
         arbitrary_types_allowed = True
+
+    @field_serializer("location")
+    def serialize_location(self, location: WKBElement) -> tuple[float, float]:
+        obj = loads(bytes(location.data))
+        return obj.coords[0]
+
+    def get_detailed(self) -> "StopDetailed":
+        from database import engine
+        with Session(engine) as session:
+            routes = session.exec(
+                select(RouteGTFS)
+                .join(StopRoute, col(StopRoute.route_id) == col(RouteGTFS.id))
+                .where(col(StopRoute.stop_id) == self.id)
+            ).all()
+
+            agencies = session.exec(
+                select(AgencyGTFS)
+                .distinct()
+                .where(col(AgencyGTFS.id).in_([r.agency_id for r in routes]))
+            ).all()
+
+        return StopDetailed(
+            **self.__dict__,
+            agencies=list(agencies),
+            routes=list(routes)
+        )
+
+class StopGTFS(StopBase, table=True):
+    __tablename__ = "gtfs_stops" # type: ignore
 
     @classmethod
     def parse(cls, **kwargs) -> "StopGTFS":
@@ -38,3 +71,8 @@ class StopGTFS(SQLModel, table=True):
             platform_code = kwargs["platform_code"],
             zone_id = kwargs["zone_id"],
         )
+
+
+class StopDetailed(StopBase):
+    agencies: list[AgencyGTFS] = Field()
+    routes: list[RouteGTFS] = Field()
