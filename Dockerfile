@@ -9,4 +9,6 @@ WORKDIR /code
 
 COPY . /code
 
+RUN mkdir data/buffers
+
 CMD ["uvicorn", "main:app", "--proxy-headers", "--host", "0.0.0.0", "--port", "80"]

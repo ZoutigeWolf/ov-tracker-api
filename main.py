@@ -10,16 +10,11 @@ from database import engine
 from data import fetch_realtime_data
 from routers import stops_router, map_router
 
-REALTIME_DIR = "data/buffers"
-
 scheduler = BackgroundScheduler()
-
-if not os.path.isdir(REALTIME_DIR):
-    os.mkdir(REALTIME_DIR)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    scheduler.add_job(fetch_realtime_data, "interval", [REALTIME_DIR], minutes=1)
+    scheduler.add_job(fetch_realtime_data, "interval", ["data/buffers"], minutes=1)
     scheduler.start()
 
     yield
