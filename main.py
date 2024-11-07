@@ -10,7 +10,11 @@ from database import engine
 from data import fetch_realtime_data
 from routers import stops_router, map_router
 
+from datetime import datetime
+print(datetime.now().time())
+
 scheduler = BackgroundScheduler()
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

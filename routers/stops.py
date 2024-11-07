@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, Path, Query, Depends
 from fastapi.responses import JSONResponse
 from geoalchemy2.functions import ST_DistanceSpheroid, ST_MakePoint, ST_SetSRID
 from sqlmodel import Session, func, select, col, and_
+from sqlalchemy import func
 from datetime import datetime
 
 from database import get_session
@@ -90,8 +91,8 @@ async def get_stop_times(
         .join(CalendarDateGTFS, col(CalendarDateGTFS.service_id) == col(TripGTFS.service_id))
         .where(and_(
             StopTimeGTFS.stop_id == stop_id,
-            StopTimeGTFS.departure > datetime.now().time(),
-            CalendarDateGTFS.date == datetime.now().date()
+            col(StopTimeGTFS.departure) > datetime.now().time(),
+            col(CalendarDateGTFS.date) == func.current_date()
         ))
         .order_by(col(StopTimeGTFS.departure))
         .limit(2)
