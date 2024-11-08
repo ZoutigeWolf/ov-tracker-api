@@ -1,10 +1,16 @@
-from sqlmodel import Field, SQLModel
+from typing import TYPE_CHECKING
+from sqlmodel import Field, SQLModel, Session, col, select
 
 from enums import WheelchairAccesibility, BikeAccesibility
 
-class TripGTFS(SQLModel, table=True):
-    __tablename__ = "gtfs_trips" # type: ignore
+if TYPE_CHECKING:
+    from models.GTFS.stop import StopGTFS
+    from models.GTFS.stop_time import StopTimeGTFS
+    from models.GTFS.shape import ShapeGTFS
+    from models.GTFS.route import RouteGTFS
 
+
+class TripBase(SQLModel):
     id: str = Field(primary_key=True)
     realtime_id: str = Field()
     service_id: str = Field()
@@ -17,6 +23,41 @@ class TripGTFS(SQLModel, table=True):
     direction: int = Field()
     wheelchair_accessible: WheelchairAccesibility = Field(default=WheelchairAccesibility.NoInformation)
     bikes_allowed: BikeAccesibility = Field(default=BikeAccesibility.NoInformation)
+
+
+    def get_detailed(self, session: Session) -> "TripDetailed":
+        from models.GTFS import ShapeGTFS, RouteGTFS, StopGTFS, StopTimeGTFS
+
+        shape = session.exec(
+            select(ShapeGTFS)
+            .where(ShapeGTFS.id == self.shape_id)
+            .limit(1)
+        ).one()
+
+        route = session.exec(
+            select(RouteGTFS)
+            .where(RouteGTFS.id == self.route_id)
+            .limit(1)
+        ).one()
+
+        stops = session.exec(
+            select(StopGTFS)
+            .join(StopTimeGTFS, col(StopTimeGTFS.trip_id) == self.id)
+            .where(StopGTFS.id == StopTimeGTFS.stop_id)
+        ).all()
+
+        TripDetailed.model_rebuild()
+
+        return TripDetailed(
+            **self.__dict__,
+            shape=shape,
+            route=route,
+            stops=list(stops)
+        )
+
+
+class TripGTFS(TripBase, table=True):
+    __tablename__ = "gtfs_trips" # type: ignore
 
     @classmethod
     def parse(cls, **kwargs) -> "TripGTFS":
@@ -34,3 +75,9 @@ class TripGTFS(SQLModel, table=True):
             wheelchair_accessible = kwargs["wheelchair_accessible"] and WheelchairAccesibility(int(kwargs["wheelchair_accessible"])),
             bikes_allowed = kwargs["bikes_allowed"] and BikeAccesibility(int(kwargs["bikes_allowed"])),
         )
+
+
+class TripDetailed(TripBase):
+    shape: "ShapeGTFS" = Field()
+    route: "RouteGTFS" = Field()
+    stops: list["StopGTFS"] = Field()

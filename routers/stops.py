@@ -65,7 +65,7 @@ async def get_all_stops(
     ).all()
 
     if detailed:
-        stops = list(map(lambda s: s.get_detailed(), stops))
+        stops = list(map(lambda s: s.get_detailed(session), stops))
 
     return [s.model_dump() for s in stops]
 
@@ -79,10 +79,11 @@ async def get_stop(
     stop = session.exec(
         select(StopGTFS)
         .where(StopGTFS.id == stop_id)
+        .limit(1)
     ).one_or_none()
 
     if detailed and stop is not None:
-        stop = stop.get_detailed()
+        stop = stop.get_detailed(session)
 
     return stop and stop.model_dump()
 
@@ -107,6 +108,6 @@ async def get_stop_times(
     ).all()
 
     if detailed:
-        times = list(map(lambda t: t.get_detailed(), times))
+        times = list(map(lambda t: t.get_detailed(session), times))
 
     return times

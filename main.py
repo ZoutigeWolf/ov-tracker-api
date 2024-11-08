@@ -6,12 +6,10 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from starlette.websockets import WebSocket
 from contextlib import asynccontextmanager
 
+from models.GTFS import *
 from database import engine
 from data import fetch_realtime_data
-from routers import stops_router, map_router
-
-from datetime import datetime
-print(datetime.now().time())
+from routers import stops_router, trips_router, map_router, ns_router
 
 scheduler = BackgroundScheduler()
 
@@ -33,4 +31,6 @@ app.add_middleware(
 )
 
 app.include_router(stops_router)
+app.include_router(trips_router)
 app.include_router(map_router)
+app.include_router(ns_router)

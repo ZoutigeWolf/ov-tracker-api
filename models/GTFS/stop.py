@@ -5,13 +5,16 @@ from sqlalchemy import Column
 from geoalchemy2 import WKTElement, Geometry
 from sqlmodel import Field, SQLModel, Session, select, col
 from shapely.wkb import loads
-from typing import Any, Annotated
+from typing import TYPE_CHECKING, Any, Annotated
 
 from enums import WheelchairBoarding, LocationType
-from models.GTFS.agency import AgencyGTFS
-from models.GTFS.route import RouteGTFS
-from models.GTFS.trip import TripGTFS
 from models.views import StopRoute
+
+if TYPE_CHECKING:
+    from models.GTFS.agency import AgencyGTFS
+    from models.GTFS.route import RouteGTFS
+    from models.GTFS.trip import TripGTFS
+
 
 class StopBase(SQLModel):
     id: str = Field(primary_key=True)
@@ -33,20 +36,22 @@ class StopBase(SQLModel):
         obj = loads(bytes(location.data))
         return obj.coords[0]
 
-    def get_detailed(self) -> "StopDetailed":
-        from database import engine
-        with Session(engine) as session:
-            routes = session.exec(
-                select(RouteGTFS)
-                .join(StopRoute, col(StopRoute.route_id) == col(RouteGTFS.id))
-                .where(col(StopRoute.stop_id) == self.id)
-            ).all()
+    def get_detailed(self, session: Session) -> "StopDetailed":
+        from models.GTFS import RouteGTFS, AgencyGTFS
 
-            agencies = session.exec(
-                select(AgencyGTFS)
-                .distinct()
-                .where(col(AgencyGTFS.id).in_([r.agency_id for r in routes]))
-            ).all()
+        routes = session.exec(
+            select(RouteGTFS)
+            .join(StopRoute, col(StopRoute.route_id) == col(RouteGTFS.id))
+            .where(col(StopRoute.stop_id) == self.id)
+        ).all()
+
+        agencies = session.exec(
+            select(AgencyGTFS)
+            .distinct()
+            .where(col(AgencyGTFS.id).in_([r.agency_id for r in routes]))
+        ).all()
+
+        StopDetailed.model_rebuild()
 
         return StopDetailed(
             **self.__dict__,
@@ -74,5 +79,5 @@ class StopGTFS(StopBase, table=True):
 
 
 class StopDetailed(StopBase):
-    agencies: list[AgencyGTFS] = Field()
-    routes: list[RouteGTFS] = Field()
+    agencies: list["AgencyGTFS"] = Field()
+    routes: list["RouteGTFS"] = Field()

@@ -1,11 +1,14 @@
+from typing import TYPE_CHECKING
 from sqlmodel import Field, SQLModel, Session, select, col
 from datetime import datetime, time
 
 from utils.time import parse_time
 from enums import PickupType, DropOffType, Timepoint
-from models.GTFS.stop import StopGTFS
-from models.GTFS.trip import TripGTFS
-from models.GTFS.route import RouteGTFS
+
+if TYPE_CHECKING:
+    from models.GTFS.stop import StopGTFS
+    from models.GTFS.route import RouteGTFS
+    from models.GTFS.trip import TripGTFS
 
 
 class StopTimeBase(SQLModel):
@@ -21,23 +24,25 @@ class StopTimeBase(SQLModel):
     shape_dist_traveled: float | None = Field()
     fare_units_traveled: int | None = Field()
 
-    def get_detailed(self) -> "StopTimeDetailed":
-        from database import engine
-        with Session(engine) as session:
-            stop = session.exec(
-                select(StopGTFS)
-                .where(col(StopGTFS.id) == self.stop_id)
-            ).one()
+    def get_detailed(self, session: Session) -> "StopTimeDetailed":
+        from models.GTFS import StopGTFS, TripGTFS, RouteGTFS
 
-            trip = session.exec(
-                select(TripGTFS)
-                .where(col(TripGTFS.id) == self.trip_id)
-            ).one()
+        stop = session.exec(
+            select(StopGTFS)
+            .where(col(StopGTFS.id) == self.stop_id)
+        ).one()
 
-            route = session.exec(
-                select(RouteGTFS)
-                .where(col(RouteGTFS.id) == trip.route_id)
-            ).one()
+        trip = session.exec(
+            select(TripGTFS)
+            .where(col(TripGTFS.id) == self.trip_id)
+        ).one()
+
+        route = session.exec(
+            select(RouteGTFS)
+            .where(col(RouteGTFS.id) == trip.route_id)
+        ).one()
+
+        StopTimeDetailed.model_rebuild()
 
         return StopTimeDetailed(
             **self.__dict__,
@@ -67,6 +72,6 @@ class StopTimeGTFS(StopTimeBase, table=True):
         )
 
 class StopTimeDetailed(StopTimeBase):
-    stop: StopGTFS
-    trip: TripGTFS
-    route: RouteGTFS
+    stop: "StopGTFS" = Field()
+    trip: "TripGTFS" = Field()
+    route: "RouteGTFS" = Field()

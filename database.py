@@ -2,8 +2,6 @@ import os
 from sqlmodel import SQLModel, Session, create_engine
 from dotenv import load_dotenv
 
-from models.GTFS import *
-
 load_dotenv()
 
 POSTGRES_HOST = os.getenv("POSTGRES_HOST")
